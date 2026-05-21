@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
+
 env:
-    TARGET: home
-    EC2_USER: ubuntu
+  TARGET: /home/ubuntu/home
+  EC2_USER: ubuntu
 
 jobs:
   deploy:
@@ -18,7 +19,7 @@ jobs:
       - name: Checkout the files
         uses: actions/checkout@v4
 
-      - name: Deploy to EC2 Server
+      - name: Deploy files to EC2
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -26,20 +27,35 @@ jobs:
           REMOTE_USER: ${{ env.EC2_USER }}
           TARGET: ${{ env.TARGET }}
 
-      - name: Executing remote ssh commands using ssh key
+      - name: Execute remote SSH commands
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST_DNS }}
           username: ${{ env.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo apt-get -y update
+            # Update packages
+            sudo apt-get update
+
+            # Install Apache
             sudo apt-get install -y apache2
-            sudo systemctl daemon-reload
-            sudo systemctl start apache2
+
+            # Check Apache configuration
+            sudo apache2ctl configtest
+
+            # Restart and enable Apache
+            sudo systemctl restart apache2
             sudo systemctl enable apache2
-            cd home
-            # Remove existing contents of /var/www/html
+
+            # Clear existing website files
             sudo rm -rf /var/www/html/*
-            # Move new files to /var/www/html
-            sudo mv * /var/www/htmlgit
+
+            # Copy new deployment files
+            sudo cp -r /home/ubuntu/home/* /var/www/html/
+
+            # Set proper permissions
+            sudo chown -R www-data:www-data /var/www/html
+            sudo chmod -R 755 /var/www/html
+
+            # Verify Apache status
+            sudo systemctl status apache2 --no-pager
