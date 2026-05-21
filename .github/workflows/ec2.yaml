@@ -34,28 +34,36 @@ jobs:
           username: ${{ env.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Update packages
+            # Update package list
             sudo apt-get update
+
+            # Stop nginx if running
+            sudo systemctl stop nginx || true
+            sudo systemctl disable nginx || true
+
+            # Kill any process using port 80
+            sudo fuser -k 80/tcp || true
 
             # Install Apache
             sudo apt-get install -y apache2
 
-            # Check Apache configuration
+            # Validate Apache configuration
             sudo apache2ctl configtest
 
             # Restart and enable Apache
             sudo systemctl restart apache2
             sudo systemctl enable apache2
 
-            # Clear existing website files
+            # Remove old website files
             sudo rm -rf /var/www/html/*
 
             # Copy new deployment files
             sudo cp -r /home/ubuntu/home/* /var/www/html/
 
-            # Set proper permissions
+            # Set correct permissions
             sudo chown -R www-data:www-data /var/www/html
             sudo chmod -R 755 /var/www/html
 
-            # Verify Apache status
-            sudo systemctl status apache2 --no-pager
+            # Check Apache status
+            sudo systemctl status apache2 --no-pagerclear
+            
