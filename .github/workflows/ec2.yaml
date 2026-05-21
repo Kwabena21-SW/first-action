@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  TARGET: /home/ubuntu/home
+  TARGET: /home/ubuntu
   EC2_USER: ubuntu
 
 jobs:
@@ -65,5 +65,4 @@ jobs:
             sudo chmod -R 755 /var/www/html
 
             # Check Apache status
-            sudo systemctl status apache2 --no-pagerclear
-            
+            sudo systemctl status apache2 --no-pager
